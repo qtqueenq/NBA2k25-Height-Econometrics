@@ -1,0 +1,152 @@
+---
+title: "ECON 425 Research Project"
+author: "Qadir Queen"
+date: "2025-12-12"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## How Height Affects Overall in NBA2k25
+
+### Introduction
+
+NBA 2k has been the monopolized basketball video game since 2009, and has used that monopoly to represent the NBA from a virtual perspective. The game ranks players on an attribute and overall rating. The attribute rating in 2k ranges from 25 to 99. With 25 being the lowest possible rating, and 99 being the highest. Historically, the lowest-rated real player in the game was Brian Scalabrine in NBA 2K12 with a 40 overall, with the highest being 99 overall, typically given to in-real-life NBA greats like prime Michael Jordan or LeBron James.
+
+The question I have for NBA 2K logistics is how height relates to overall. Aside from skill and other intangibles, I believe that height has an impact on how high a player's overall is, with taller heights correlating to higher overalls. I will be testing this using three different models: one comparing just height_cm to overall (simple regression model), one comparing height_cm and weight_kg to overall (multiple regression with controls), and one comparing height_cm, weight_kg, and skill-related attributes (three_point_shot, driving_dunk, interior_defense, etc.) to overall (stronger multiple regression model with skills). Each model has their own purpose in the paper, with the last model allowing me to see how height affects overall after controlling for skills. 
+
+I will be using data from NBA2k25, which relates to the 2024-2025 NBA season. I will be using data from this year's 2K because it is the latest complete season, so there will be no updates to game, and therefore, no change (whereas there will be updates and changes overall in NBA 2k26). The dataset is called current_nba_players.csv.  
+
+
+### Summary Statistics table
+
+```{r}
+rm(list=ls())
+data <- read.csv("current_nba_players.csv")
+```
+
+
+
+```{r}
+library(tidyverse)
+
+summary_table <- data %>%
+  select(overall, height_cm, weight_kg, three_point_shot, driving_dunk, standing_dunk, speed, ball_handle, pass_accuracy, interior_defense, perimeter_defense, steal, block, offensive_rebound, defensive_rebound) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "value") %>%
+  group_by(Variable) %>%
+  summarise(
+    Observations = sum(!is.na(value)),
+    Mean = mean(value, na.rm = TRUE),
+    StDev = sd(value, na.rm = TRUE),
+    Median = median(value, na.rm = TRUE),
+    Min = min(value, na.rm = TRUE),
+    Max = max(value, na.rm = TRUE)
+  )
+
+summary_table
+
+```
+
+```{r}
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+
+kable(summary_table, format = "html", caption = "Summary Statistics") %>%
+  kable_styling(full_width = FALSE)
+```
+
+### Regession Results table
+
+```{r}
+m1 = lm(overall ~ height_cm, data=data)
+summary(m1)
+```
+
+```{r}
+m2 = lm(overall ~ height_cm + weight_kg, data=data)
+summary(m2)
+```
+
+```{r}
+m3 = lm(overall ~ height_cm + weight_kg + three_point_shot + driving_dunk + standing_dunk + speed + ball_handle + pass_accuracy + interior_defense + perimeter_defense + steal + block + offensive_rebound + defensive_rebound, data=data)
+summary(m3)
+```
+
+
+
+```{r}
+library(stargazer)
+
+stargazer( m1, m2, m3, title = "Regression Results", type = "text", out = "models1.txt")
+```
+
+
+
+### Scatterplot of Overall vs Height_cm
+
+
+```{r}
+plot(data$height_cm, data$overall, xlab = "Height(cm)", ylab = "Overall", col = "dark green")
+abline(m1, col = "grey")
+```
+
+
+
+### Six Assumptions of Classical Linear Model
+
+#### MLR.1
+
+MLR.1 states that the regression equation is linear in its parameters. This means the dependent variable, overall rating, must be expressed as a linear combination of the explanatory variables and their associated coefficients. Because all variables (height_cm, weight_kg, three_point_shot, etc.) enter the regression linearly without any transformations, interactions, or nonlinear terms, I believe MLR.1 is true. 
+
+#### MLR.2
+
+MLR.2 states that the data is drawn as a random sample from the population. However, the dataset used for this project contains the entire population of current NBA players included in NBA 2K25. While this technically means the sample is not randomly drawn, using complete population data does not violate the logic or reliability of OLS estimates. Instead, it simply limits external generalizability. The conclusions apply specifically to NBA 2K25 player ratings, rather than to hypothetical future or past seasons. Thus, although the assumption does not perfectly hold in a formal sense, it does not compromise the validity of the regression results in this context.
+
+#### MLR.3
+
+MLR.3 states that the explanatory variables cannot be exact linear combinations of one another. Based on the regression results, the model does not suffer from perfect multicollinearity, but it does exhibit high multicollinearity, especially with certain variables such as weight, dunking, defense, and rebounding, which are naturally correlated to height. Evidence of multicollinearity includes the increase in standard errors and the loss of statistical significance for height once additional variables are added. While this does not bias the OLS estimates, it does reduce precision, making height harder to estimate reliably.
+
+#### MLR.4
+
+MLR.4 states that the explanatory variables are uncorrelated with the error term. In other words, no important variable affecting the overall rating is omitted from the regression. In the simpler models (such as Model 1 and 2), this assumption is likely violated because height and weight correlate strongly with key skill attributes such as shooting and defense, which were initially excluded. As a result, Models 1 and 2 most likely suffer from omitted variable bias, making the estimated effect of height unreliable. In the full model (Model 3), many of the most important skill ratings are included, which reduces omitted variable bias substantially and makes exogeneity more plausible. Although exogeneity can never be proven, Model 3 is much less likely to violate this assumption than the earlier models.
+
+#### MLR.5
+
+MLR.5 states that the variance of the error term is constant across all observations (homoskedasticity). In general, this assumption is frequently violated in real-world data, and sports statistics (including NBA 2K ratings) often exhibit heteroskedasticity. To test this, I did a Breusch-Pagan test for Model 3. 
+
+```{r}
+library(AER)
+
+bptest(m3)
+```
+The test produced a statistic of 17.56 with a p-value of 0.2276. Since the p-value is well above the 0.05 significance threshold, I fail to reject the null hypothesis of homoskedasticity. This indicates that there is no statistical evidence of heteroskedasticity in Model 3, meaning the residual variance appears constant across observations. As a result, the OLS standard errors used for inference in Model 3 are appropriate and reliable. In other words, MLR. 5 is not violated.
+
+
+#### MLR.6
+
+MLR.6 states that the residuals should follow a normal distribution, with a mean of zero and constant variance. This assumption ensures that the t-tests and F-tests used in regression analysis are valid, especially in small samples. With larger sample sizes, such as this project, minor deviations from normality are not a major concern due to the Central Limit Theorem. I will still test to see if the regression follows a normal distribution.
+
+
+```{r}
+residuals <- resid(m3)
+steps <- (max(residuals)-min(residuals))/100
+
+hist(residuals,freq=F)
+lines(seq(min(residuals), max(residuals), by=steps), dnorm(seq(min(residuals), max(residuals), by=steps), 0, sd(residuals)), col="dark green")
+```
+
+To evaluate the normality assumption (MLR.6), I plotted a histogram of the residuals from Model 3 and overlaid a normal density curve. The distribution is roughly bell-shaped and centered near zero, indicating an approximately normal pattern. However, the histogram shows a slightly heavier right tail, suggesting mild deviations from perfect normality. Given the large sample size (over 440 observations), these small outliers are not concerning. Because of the Central Limit Theorem, the OLS estimators and test statistics remain valid even when the errors are only approximately normal. Therefore, I conclude that the normality assumption is reasonably satisfied for Model 3.
+
+### Conclusion
+
+I have learned from this research project not only how to run and interpret multiple regression models, but also how the Classical Linear Model assumptions affect the reliability of my results. By starting with a simple model and gradually adding more variables, I saw firsthand how omitted variable bias and model specification shape the estimated relationship between my variables of interest. In particular, I learned that my original expectation of height being a strong predictor of overall rating in NBA 2K25 did not hold once skill attributes were added to the model. The full model showed that attributes such as shooting, defense, passing, and athleticism are far stronger predictors of overall rating than height or weight. I also learned how to evaluate diagnostics such as heteroskedasticity tests and normality of residuals, make a statistics summary table, and how these tools help determine whether a model is statistically sound. Learning how to code these in R Studio was a highlight of this project, especially when it came to doing a project on the video game I love. 
+
+In this project, a few questions remain unanswered. The regression showed that height is not significant in predicting overall, as compared to other variables. Why does NBA 2K assign height so little significance to overall relative to skills? The rating algorithm is proprietary, so the true functional form remains unknown. For this project, the model treated all players as one group? Height typically matters more for centers than guards, so would grouping players and heights by position have changed the outcome of the model?
+
+Overall, this project helped me apply econometric tools to a real dataset, interpret regression results, and evaluate modeling assumptions. I enjoyed this project and was glad I could incorporate econometrics into my favorite video game.
+
