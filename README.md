@@ -1,79 +1,67 @@
-# NBA2k25-Height-Econometrics
+# Does Height Affect Overall Rating in NBA 2K25?
 
-# Econometric Analysis of Height vs. Overall Rating in NBA 2K25
+An econometric analysis in R of how player height relates to overall rating in *NBA 2K25* (N = 457 players), built for ECON 425 at the University of Hawai'i at Manoa (Fall 2025).
 
-## 📌 Executive Summary
-Does physical height inherently dictate a player's rating in video game logistics, or are overall ratings purely driven by skill attributes? This econometric research project investigates the relationship between **height (`height_cm`)** and **overall player rating (`overall`)** across all active NBA players in *NBA 2K25* ($N = 457$).
+**Full write-up:** `index.html` (rendered report) | **Code:** `scripts/` | **Data:** `data/current_nba_players.csv`
 
-Through iterative OLS (Ordinary Least Squares) regression modeling, this study tests whether initial positive correlations between height and overall rating are statistically robust or driven by **Omitted Variable Bias (OVB)**. The final model demonstrates that once specific skill ratings (shooting, defense, playmaking, and athleticism) are controlled for, height has **no statistically significant effect** on overall rating—confirming that the game’s underlying rating algorithm heavily prioritizes skill attributes over raw physical stature.
+## Question
 
----
+Taller players tend to be better at some things in basketball, so I expected height to push a player's overall rating up. I tested whether that holds once a player's skill ratings are accounted for.
 
-## 🛠️ Tech Stack & Key Libraries
-* **Language:** R
-* **Core Packages:** `tidyverse` (`dplyr`, `ggplot2`, `tidyr`, `readr`), `stargazer`, `knitr`, `kableExtra`
-* **Econometric & Diagnostic Testing:** `AER`, `car`, `lmtest`, `zoo`, `sandwich`
+## Data
 
----
+- `current_nba_players.csv`: ratings and measurements for every player in NBA 2K25 (2024-25 season), 457 players.
+- Outcome: `overall` (range 67-98, mean 77.8).
+- Main variable: `height_cm` (173-226 cm, mean 200).
+- Controls: `weight_kg`, plus 12 skill attributes (three-point shot, driving dunk, standing dunk, speed, ball handle, pass accuracy, interior defense, perimeter defense, steal, block, offensive rebound, defensive rebound).
+- 14 players are missing skill attributes, so Model 3 uses 443 observations.
+- Data source: [add source and date retrieved].
 
-## 📊 Dataset Overview
-The analysis utilizes data scraped for all active NBA players in *NBA 2K25* (`current_nba_players.csv`). 
+## Method
 
-### Key Variables Analyzed:
-* **Dependent Variable ($Y$):** `overall` (Player Overall Rating, range: 67–98)
-* **Primary Explanatory Variable ($X_1$):** `height_cm` (Height in centimeters, range: 173–226 cm)
-* **Control Variables:** `weight_kg`
-* **Skill Attributes:** `three_point_shot`, `driving_dunk`, `standing_dunk`, `speed`, `ball_handle`, `pass_accuracy`, `interior_defense`, `perimeter_defense`, `steal`, `block`, `offensive_rebound`, `defensive_rebound`
+Three nested OLS models, each answering a different question:
 
----
+1. `overall ~ height_cm` (raw relationship)
+2. `overall ~ height_cm + weight_kg` (add body size)
+3. `overall ~ height_cm + weight_kg + 12 skill attributes` (hold skill constant)
 
-## 📈 Econometric Methodology & Model Specifications
+Comparing the height coefficient across models shows how much of the raw correlation is really omitted variable bias.
 
-Three separate regression models were specified to evaluate the stability of the height coefficient:
+I also checked the six Classical Linear Model assumptions (MLR.1 to MLR.6) for the full model.
 
-1. **Model 1 (Simple Linear Regression):**
-   $$\text{overall} = \beta_0 + \beta_1(\text{height}) + u$$
-2. **Model 2 (Multiple Regression with Physical Controls):**
-   $$\text{overall} = \beta_0 + \beta_1(\text{height}) + \beta_2(\text{weight}) + u$$
-3. **Model 3 (Full Specification with Skill Attributes):**
-   $$\text{overall} = \beta_0 + \beta_1(\text{height}) + \beta_2(\text{weight}) + \sum \beta_k(\text{Skill Attributes}_k) + u$$
+## Results
 
----
+| | Model 1 | Model 2 | Model 3 |
+|---|---|---|---|
+| `height_cm` | 0.055 (p = 0.111) | -0.020 (p = 0.676) | **-0.024 (p = 0.643)** |
+| `weight_kg` | | 0.091 (p = 0.015) | 0.064 (p = 0.041) |
+| Observations | 457 | 456 | 443 |
+| R-squared | 0.006 | 0.020 | 0.535 |
+| Adjusted R-squared | 0.003 | 0.016 | 0.520 |
 
-## 🔬 Regression Results & Key Findings
+Strongest skill predictors in Model 3 (all p < 0.001): pass accuracy (0.198), defensive rebound (0.136), three-point shot (0.105), interior defense (0.097), block (0.065), and steal (-0.060, negative).
 
-| Variable | Model 1 (Simple) | Model 2 (Controls) | Model 3 (Full Specification) |
-| :--- | :---: | :---: | :---: |
-| **`height_cm`** | 0.055 (p = 0.111) | -0.020 (p = 0.676) | **-0.024 (p = 0.643)** |
-| **`weight_kg`** | — | 0.091** (p = 0.015) | **0.064** (p = 0.041) |
-| **`pass_accuracy`** | — | — | **0.198*** (p < 0.001) |
-| **`defensive_rebound`**| — | — | **0.136*** (p < 0.001) |
-| **`three_point_shot`** | — | — | **0.105*** (p < 0.001) |
-| **`interior_defense`** | — | — | **0.097*** (p < 0.001) |
-| **Observations** | 457 | 456 | 443 |
-| **$R^2$** | **0.006** | **0.020** | **0.535** |
-| **Adjusted $R^2$** | 0.003 | 0.016 | **0.520** |
+**Takeaways**
 
-*Significance levels: *p<0.1; **p<0.05; ***p<0.01*
+- Height is not a statistically significant predictor of overall rating in any model, and it is never close once skills are controlled (p = 0.64).
+- Adding skill attributes raises R-squared from 0.02 to 0.54, roughly 51 percentage points of explained variation, so ratings are driven by skills rather than size.
+- The result fits the omitted-variable story: height is correlated with skills like rebounding and interior defense, which are what the rating rewards.
 
-### Key Insights:
-* **Height is Not a Statistically Significant Predictor:** In Model 3, the coefficient for `height_cm` is **-0.024** with a p-value of **0.643**. Controlling for skills reveals that height alone does not boost overall rating.
-* **Model Fit Explanatory Power:** Moving from Model 1 ($R^2 = 0.006$) to Model 3 ($R^2 = 0.535$) increased explanatory power by over **53%**, proving that skill ratings account for the majority of variation in overall player ratings.
-* **Top Drivers of Overall Rating:** `pass_accuracy` ($\beta = 0.198$), `defensive_rebound` ($\beta = 0.136$), `three_point_shot` ($\beta = 0.105$), and `interior_defense` ($\beta = 0.097$) emerged as the strongest statistically significant positive contributors.
+## Diagnostics
 
----
+- **MLR.1 (linearity in parameters):** holds; no transformations or interactions.
+- **MLR.2 (random sampling):** formally violated, since the data is the full population of players in the game. Results apply to NBA 2K25 specifically rather than to other seasons.
+- **MLR.3 (no perfect collinearity):** no perfect collinearity, but collinearity among height, weight, dunking, rebounding and defense is high, which widens standard errors and makes height hard to estimate precisely. [Add VIF results if you run `car::vif(m3)`.]
+- **MLR.4 (exogeneity):** Models 1 and 2 likely suffer from omitted variable bias. Model 3 reduces it but cannot rule it out.
+- **MLR.5 (homoskedasticity):** Breusch-Pagan test, BP = 17.56, df = 14, p = 0.228. Fail to reject constant variance.
+- **MLR.6 (normality):** residual histogram is roughly bell-shaped with a slightly heavier right tail. With 443 observations, inference is still reasonable.
 
-## 🧪 Classical Linear Model (CLM) Diagnostics
+## Limitations and next steps
 
-To validate statistical inference, the six Classical Linear Model (CLM) assumptions were thoroughly tested on Model 3:
+- 2K's rating formula is proprietary, so the true functional form is unknown.
+- All players are pooled. Height probably matters differently for guards and centers, so the next step is to add position and test a height-by-position interaction.
+- Ratings are a video game's judgment of players, not measured on-court performance.
 
-* **MLR.1 (Linear in Parameters):** Satisfied. All variables enter the OLS equation linearly without non-linear transformations.
-* **MLR.2 (Random Sampling):** Evaluated. Data includes the entire population of active NBA players represented in *NBA 2K25*, validating internal consistency for the 2024–2025 season.
-* **MLR.3 (No Perfect Multicollinearity):** Satisfied. While high multicollinearity exists naturally between height, weight, and position-based attributes (e.g., dunking and interior defense), standard errors remain stable without exact linear dependency.
-* **MLR.4 (Exogeneity / Omitted Variable Bias):** Models 1 and 2 suffered heavily from omitted variable bias. Model 3 effectively mitigates OVB by controlling for key offensive and defensive skill metrics.
-* **MLR.5 (Homoskedasticity):** Tested via the **Breusch-Pagan Test** (`bptest(m3)`):
-  * **$\text{BP} = 17.56$, $\text{df} = 14$, $\text{p-value} = 0.2276$**
-  * *Result:* Failed to reject the null hypothesis of homoskedasticity ($p > 0.05$). Residual variance is constant, confirming OLS standard errors are appropriate and reliable.
-* **MLR.6 (Normality of Residuals):** Plotting residual distributions against a normal curve showed a standard bell-shaped curve centered near zero. By the **Central Limit Theorem ($N = 443$)**, OLS test statistics ($t$-tests and $F$-tests) remain valid.
+## Tools
 
----
+R, tidyverse, stargazer, knitr, kableExtra, AER, car, lmtest, sandwich.
