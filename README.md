@@ -75,3 +75,5 @@ To validate statistical inference, the six Classical Linear Model (CLM) assumpti
   * **$\text{BP} = 17.56$, $\text{df} = 14$, $\text{p-value} = 0.2276$**
   * *Result:* Failed to reject the null hypothesis of homoskedasticity ($p > 0.05$). Residual variance is constant, confirming OLS standard errors are appropriate and reliable.
 * **MLR.6 (Normality of Residuals):** Plotting residual distributions against a normal curve showed a standard bell-shaped curve centered near zero. By the **Central Limit Theorem ($N = 443$)**, OLS test statistics ($t$-tests and $F$-tests) remain valid.
+
+---
