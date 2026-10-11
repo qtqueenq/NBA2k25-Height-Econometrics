@@ -75,18 +75,3 @@ To validate statistical inference, the six Classical Linear Model (CLM) assumpti
   * **$\text{BP} = 17.56$, $\text{df} = 14$, $\text{p-value} = 0.2276$**
   * *Result:* Failed to reject the null hypothesis of homoskedasticity ($p > 0.05$). Residual variance is constant, confirming OLS standard errors are appropriate and reliable.
 * **MLR.6 (Normality of Residuals):** Plotting residual distributions against a normal curve showed a standard bell-shaped curve centered near zero. By the **Central Limit Theorem ($N = 443$)**, OLS test statistics ($t$-tests and $F$-tests) remain valid.
-
----
-
-## 📁 Repository Structure
-```text
-.
-├── data/
-│   └── current_nba_players.csv         # NBA 2K25 Player Attribute Dataset
-├── scripts/
-│   └── ECON_425_Research_Project.Rmd   # Complete R Markdown script
-├── outputs/
-│   ├── models1.txt                     # Stargazer regression outputs
-│   └── residual_histogram.png          # MLR.6 diagnostic residual plot
-├── ECON_425_Research_Project.pdf       # Original Academic Research Paper
-└── README.md                           # Project documentation
